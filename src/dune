@@ -1,0 +1,3 @@
+(library
+ (public_name ezmysql)
+ (libraries astring calendar fmt mysql ocamlgraph rresult uri))
