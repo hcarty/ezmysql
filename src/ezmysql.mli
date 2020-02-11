@@ -1,7 +1,8 @@
 module Datetime = CalendarLib.Calendar.Precise
 module Date = Datetime.Date
 module Time = Datetime.Time
-module String_map : Map.S with type key = string
+module String_map :
+  Map.S with type key = string with type 'a t = 'a Map.Make(String).t
 
 val connect :
   ?reconnect:bool -> Uri.t -> (Mysql.dbd, [> `Msg of string ]) result
