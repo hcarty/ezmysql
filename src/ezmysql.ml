@@ -1,7 +1,7 @@
 module Datetime = CalendarLib.Calendar.Precise
 module Date = Datetime.Date
 module Time = Datetime.Time
-module String_map = struct
+module Row = struct
   include Map.Make (String)
 
   let keys m = to_seq m |> Seq.map fst |> List.of_seq
@@ -510,9 +510,9 @@ end
 
 type 'kind sql = string constraint 'kind = [< `Run | `Get ]
 
-type row = Field.packed option String_map.t
+type row = Field.packed option Row.t
 
-let row_of_list l = List.to_seq l |> String_map.of_seq
+let row_of_list l = List.to_seq l |> Row.of_seq
 
 let pack_column_opt spec vo =
   let column = Column.of_spec spec in
@@ -526,7 +526,7 @@ let pack_column spec v = pack_column_opt spec (Some v)
 let find_column spec (row : row) =
   let column = Column.of_spec spec in
   let name = Column.name column in
-  match String_map.find_opt name row with
+  match Row.find_opt name row with
   | None -> R.error_msgf "no column %s in row" name
   | Some None -> R.ok None
   | Some (Some packed) ->
@@ -546,8 +546,8 @@ let make_run fmt = Fmt.kstrf (fun x -> x) fmt
 let make_get fmt = Fmt.kstrf (fun x -> x) fmt
 
 let insert' dbd ~into:table fields fmt =
-  let columns = String_map.keys fields in
-  let values = String_map.values fields in
+  let columns = Row.keys fields in
+  let values = Row.values fields in
   Fmt.kstrf
     (fun s ->
       make_run "insert into %s %a values %a %s" table
@@ -565,11 +565,11 @@ let insert ?on_duplicate_key_update dbd ~into row =
   | Some update ->
     let (id_column, columns) =
       match update with
-      | `All -> (None, String_map.keys row)
+      | `All -> (None, Row.keys row)
       | `Columns columns -> (None, columns)
       | `Except columns ->
         ( None,
-          List.filter (fun name -> List.mem name columns) (String_map.keys row)
+          List.filter (fun name -> List.mem name columns) (Row.keys row)
         )
       | `With_id (id_column, columns) -> (Some id_column, columns)
     in
@@ -620,7 +620,7 @@ let parse_row columns row =
         Option.map (field_of_mysql_type_exn Mysql.(col.ty)) row.(i) ))
     columns
   |> Array.to_seq
-  |> String_map.of_seq
+  |> Row.of_seq
 
 let to_rows columns result =
   let rec loop rows =
@@ -663,7 +663,7 @@ let get dbd sql =
 
 let get_v (type o) (column : (o, _) Column.t) (row : row) : o option =
   let name = Column.name column in
-  match String_map.find_opt name row with
+  match Row.find_opt name row with
   | None -> Fmt.invalid_arg "Ezmysql.get_v: No column %s in row" name
   | Some v ->
     ( match v with

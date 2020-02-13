@@ -1,7 +1,7 @@
 module Datetime = CalendarLib.Calendar.Precise
 module Date = Datetime.Date
 module Time = Datetime.Time
-module String_map :
+module Row :
   Map.S with type key = string with type 'a t = 'a Map.Make(String).t
 
 val connect :
@@ -306,7 +306,7 @@ end
 type 'kind sql = private string constraint 'kind = [< `Run | `Get ]
 (** SQL you can [`Run] for side-effects or [`Get] values from. *)
 
-type row = Field.packed option String_map.t
+type row = Field.packed option Row.t
 (** A row is a map from strings (column names) to fields, where [None] signifies
     a [NULL] field *)
 
